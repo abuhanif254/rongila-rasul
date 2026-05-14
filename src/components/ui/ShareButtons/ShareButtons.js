@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Stack, IconButton, Tooltip, Snackbar, Alert } from "@mui/material";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import TwitterIcon from "@mui/icons-material/Twitter";
+import TwitterIcon from "@mui/icons-material/X";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ShareIcon from "@mui/icons-material/Share";
@@ -10,32 +11,50 @@ import { Typography } from "@mui/material";
 
 const ShareButtons = ({ title, url }) => {
   const [snackOpen, setSnackOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [pageUrl, setPageUrl] = useState(url || "");
 
-  const pageUrl = url || (typeof window !== "undefined" ? window.location.href : "");
-  const encoded = encodeURIComponent(pageUrl);
-  const encodedTitle = encodeURIComponent(title || "Check this out on The Brain");
+  useEffect(() => {
+    setMounted(true);
+    if (!url && typeof window !== "undefined") {
+      setPageUrl(window.location.href);
+    }
+  }, [url]);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(pageUrl);
+      const shareUrl = url || window.location.href;
+      await navigator.clipboard.writeText(shareUrl);
       setSnackOpen(true);
-    } catch {
-      // fallback
+    } catch (err) {
+      console.error("Copy failed:", err);
     }
   };
+
+  if (!mounted) return null;
+
+  const currentUrl = url || pageUrl;
+  const encoded = encodeURIComponent(currentUrl);
+  const encodedTitle = encodeURIComponent(title || "Check this out on The Brain");
 
   const BUTTONS = [
     {
       icon: <TwitterIcon fontSize="small" />,
-      label: "Share on Twitter",
-      href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encoded}`,
-      color: "#1DA1F2",
+      label: "Share on X",
+      href: `https://x.com/intent/tweet?text=${encodedTitle}&url=${encoded}`,
+      color: "#000000",
     },
     {
       icon: <FacebookIcon fontSize="small" />,
       label: "Share on Facebook",
       href: `https://www.facebook.com/sharer/sharer.php?u=${encoded}`,
       color: "#1877F2",
+    },
+    {
+      icon: <LinkedInIcon fontSize="small" />,
+      label: "Share on LinkedIn",
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`,
+      color: "#0A66C2",
     },
     {
       icon: <WhatsAppIcon fontSize="small" />,

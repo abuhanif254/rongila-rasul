@@ -342,6 +342,47 @@ const LoginPage = () => {
                   >
                     {loading ? "Authenticating…" : "Sign In to Dashboard"}
                   </Button>
+
+                  <Box sx={{ py: 2 }}>
+                    <Divider>
+                      <Typography variant="caption" sx={{ color: "text.secondary", px: 1, fontWeight: 600 }}>
+                        OR CONTINUE WITH
+                      </Typography>
+                    </Divider>
+                  </Box>
+
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    onClick={async () => {
+                      setLoading(true);
+                      setError("");
+                      try {
+                        const { loginWithGoogle } = await import("@/lib/auth-service");
+                        await loginWithGoogle();
+                        document.cookie = `admin_token=google_session; path=/; max-age=604800`;
+                        router.push("/dashboard");
+                      } catch (err) {
+                        setError("Google sign-in failed. Please try again.");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    startIcon={<Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={18} height={18} alt="G" />}
+                    sx={{
+                      py: 1.5,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      borderColor: "#e2e8f0",
+                      color: "#475569",
+                      "&:hover": { borderColor: "#c0392b", bgcolor: "rgba(192,57,43,0.02)" }
+                    }}
+                  >
+                    Continue with Google
+                  </Button>
                 </Stack>
               </Box>
 

@@ -22,6 +22,7 @@ export const getSingleNews = async (id) => {
       image_url: fields.image_url?.stringValue || "",
       thumbnail_url: fields.thumbnail_url?.stringValue || "",
       category: fields.category?.stringValue || "General",
+      total_view: fields.total_view?.integerValue ? parseInt(fields.total_view.integerValue) : 0,
       author: {
         name: fields.author?.mapValue?.fields?.name?.stringValue || "The Brain Reporter",
         published_date: fields.author?.mapValue?.fields?.published_date?.stringValue || new Date().toDateString(),

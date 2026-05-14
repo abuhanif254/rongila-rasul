@@ -34,6 +34,8 @@ const MENU_ITEMS = [
   { title: "Analytics", path: "/dashboard/analytics", icon: <BarChartIcon /> },
   { title: "Messages", path: "/dashboard/messages", icon: <EmailIcon /> },
   { title: "Subscribers", path: "/dashboard/subscribers", icon: <PeopleIcon /> },
+  { title: "Users", path: "/dashboard/users", icon: <PeopleIcon /> },
+  { title: "My Profile", path: "/dashboard/profile", icon: <PeopleIcon /> },
   { title: "Settings", path: "/dashboard/settings", icon: <SettingsIcon /> },
 ];
 

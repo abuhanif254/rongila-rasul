@@ -13,7 +13,8 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import SortIcon from "@mui/icons-material/Sort";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
-import { getAllNews, deleteNews } from "@/lib/firestore";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import { getAllNews, deleteNews, updateNewsStatus } from "@/lib/firestore";
 import { useRouter } from "next/navigation";
 
 const ITEMS_PER_PAGE = 10;
@@ -48,6 +49,17 @@ export default function ManageNews() {
       setError("Failed to load articles from Firestore.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      await updateNewsStatus(id, "approved");
+      setNews(prev => prev.map(n => (n.id || n._id) === id ? { ...n, status: "approved" } : n));
+      setSuccessMsg("Article approved successfully!");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      setError("Failed to approve article.");
     }
   };
 
@@ -239,6 +251,7 @@ export default function ManageNews() {
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>Article</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>Published</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>Views</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>Actions</TableCell>
@@ -296,6 +309,17 @@ export default function ManageNews() {
                         />
                       </TableCell>
                       <TableCell>
+                        <Chip
+                          label={item.status || "approved"} size="small"
+                          sx={{
+                            fontWeight: 800, fontSize: "0.65rem", height: 24, textTransform: "uppercase",
+                            bgcolor: item.status === "pending" ? "#fff7ed" : "#f0fdf4",
+                            color: item.status === "pending" ? "#ea580c" : "#16a34a",
+                            border: `1px solid ${item.status === "pending" ? "#ffedd5" : "#dcfce7"}`,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="caption" sx={{ color: "#64748b" }}>
                           {item.author?.published_date || "N/A"}
                         </Typography>
@@ -310,6 +334,15 @@ export default function ManageNews() {
                       </TableCell>
                       <TableCell align="center">
                         <Stack direction="row" justifyContent="center" gap={0.5}>
+                          {item.status === "pending" && (
+                            <Tooltip title="Approve">
+                              <IconButton size="small" onClick={() => handleApprove(id)}
+                                sx={{ color: "#16a34a", "&:hover": { bgcolor: "rgba(22,163,74,0.08)" } }}
+                              >
+                                <VerifiedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                           <Tooltip title="Edit">
                             <IconButton size="small" onClick={() => router.push(`/dashboard/news/edit/${id}`)}
                               sx={{ color: "#3b82f6", "&:hover": { bgcolor: "rgba(59,130,246,0.08)" } }}

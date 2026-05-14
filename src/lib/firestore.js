@@ -7,6 +7,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  increment,
   query,
   where,
   orderBy,
@@ -70,6 +71,8 @@ export async function createNews(newsData) {
   try {
     const docRef = await addDoc(newsCollection, {
       ...newsData,
+      status: newsData.status || "pending",
+      total_view: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -79,6 +82,21 @@ export async function createNews(newsData) {
     throw error;
   }
 }
+
+// Update News Status (Approve/Reject)
+export const updateNewsStatus = async (id, status) => {
+  try {
+    const docRef = doc(db, "news", id);
+    await updateDoc(docRef, { 
+      status,
+      updatedAt: serverTimestamp() 
+    });
+    return { status: true };
+  } catch (error) {
+    console.error("Error updating news status:", error);
+    throw error;
+  }
+};
 
 // Update news
 export async function updateNews(id, newsData) {
@@ -105,6 +123,39 @@ export async function deleteNews(id) {
   } catch (error) {
     console.error("Error deleting news:", error);
     throw error;
+  }
+}// Increment article views (Using REST to bypass gRPC blocks)
+// Note: Requires Firestore Rules to allow public 'update' for the 'total_view' field.
+export async function incrementViews(id) {
+  const projectId = db.app.options.projectId;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writes: [
+          {
+            transform: {
+              document: `projects/${projectId}/databases/(default)/documents/news/${id}`,
+              fieldTransforms: [
+                {
+                  fieldPath: "total_view",
+                  increment: { integerValue: 1 }
+                }
+              ]
+            }
+          }
+        ]
+      })
+    });
+
+    if (res.ok) {
+      console.log(`✅ View incremented for article: ${id}`);
+    }
+  } catch (error) {
+    // Silent fail in production to avoid blocking the UI
   }
 }
 
@@ -250,6 +301,96 @@ export const deleteCategoryFirestore = async (id) => {
     return { status: true };
   } catch (error) {
     console.error("Error deleting category:", error);
+    throw error;
+  }
+};
+
+// AUTHOR PROFILES MANAGEMENT (Using REST to bypass gRPC blocks)
+export const getAuthorProfile = async (name) => {
+  const projectId = db.app.options.projectId;
+  const apiKey = db.app.options.apiKey;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "authors" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "name" },
+              op: "EQUAL",
+              value: { stringValue: name }
+            }
+          },
+          limit: 1
+        }
+      })
+    });
+    const data = await res.json();
+    if (!data[0] || !data[0].document) return null;
+    
+    const doc = data[0].document;
+    const fields = doc.fields;
+    const id = doc.name.split("/").pop();
+    
+    return {
+      id,
+      name: fields.name?.stringValue || "",
+      image: fields.image?.stringValue || "",
+      role: fields.role?.stringValue || "",
+      bio: fields.bio?.stringValue || "",
+      expertise: fields.expertise?.arrayValue?.values?.map(v => v.stringValue) || [],
+      social: {
+        twitter: fields.social?.mapValue?.fields?.twitter?.stringValue || "",
+        linkedin: fields.social?.mapValue?.fields?.linkedin?.stringValue || "",
+        website: fields.social?.mapValue?.fields?.website?.stringValue || ""
+      }
+    };
+  } catch (error) {
+    console.error("Error getting author profile via REST:", error);
+    return null;
+  }
+};
+
+export const saveAuthorProfile = async (id, profileData) => {
+  const projectId = db.app.options.projectId;
+  const apiKey = db.app.options.apiKey;
+  
+  // Use 'patch' for both create and update in REST (if ID exists)
+  // If no ID, we'd normally use 'create', but for simplicity in a dashboard
+  // we'll often have an ID or use a specific doc name.
+  
+  const docId = id || profileData.name.toLowerCase().replace(/\s+/g, '-');
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/authors/${docId}?key=${apiKey}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          name: { stringValue: profileData.name },
+          image: { stringValue: profileData.image || "" },
+          role: { stringValue: profileData.role || "" },
+          bio: { stringValue: profileData.bio || "" },
+          expertise: { arrayValue: { values: (profileData.expertise || []).map(s => ({ stringValue: s })) } },
+          social: {
+            mapValue: {
+              fields: {
+                twitter: { stringValue: profileData.social?.twitter || "" },
+                linkedin: { stringValue: profileData.social?.linkedin || "" },
+                website: { stringValue: profileData.social?.website || "" }
+              }
+            }
+          }
+        }
+      })
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("Error saving author profile via REST:", error);
     throw error;
   }
 };

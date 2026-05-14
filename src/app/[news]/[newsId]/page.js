@@ -1,5 +1,6 @@
 import { getSingleNews } from "@/utils/getSingleNews";
 import { getAllNews } from "@/utils/getAllNews";
+import { incrementViews } from "@/lib/firestore";
 import NewsDetailClient from "./NewsDetailClient";
 import Link from "next/link";
 import Script from "next/script";
@@ -41,6 +42,11 @@ export default async function NewsDetailPage({ params }) {
   const { newsId } = resolvedParams;
   
   const newsResponse = await getSingleNews(newsId);
+  
+  // Increment views only for real articles (not fallbacks)
+  if (newsResponse.status && newsResponse.message !== "fallback") {
+    await incrementViews(newsId);
+  }
   
   if (!newsResponse.status) {
     return (

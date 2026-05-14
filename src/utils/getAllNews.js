@@ -17,26 +17,30 @@ export const getAllNews = async () => {
       return { status: true, message: "success", data: [] };
     }
 
-    // Format the REST data into the standard format the app expects
-    const formattedData = data.documents.map(doc => {
-      const fields = doc.fields;
-      const id = doc.name.split('/').pop();
-      
-      return {
-        id,
-        _id: id,
-        title: fields.title?.stringValue || "Untitled",
-        details: fields.details?.stringValue || "",
-        image_url: fields.image_url?.stringValue || "",
-        thumbnail_url: fields.thumbnail_url?.stringValue || "",
-        category: fields.category?.stringValue || "General",
-        author: {
-          name: fields.author?.mapValue?.fields?.name?.stringValue || "The Brain Reporter",
-          published_date: fields.author?.mapValue?.fields?.published_date?.stringValue || new Date().toDateString(),
-          img: fields.author?.mapValue?.fields?.img?.stringValue || ""
-        }
-      };
-    });
+    // Format and Filter for Approved only
+    const formattedData = data.documents
+      .map(doc => {
+        const fields = doc.fields;
+        const id = doc.name.split('/').pop();
+        
+        return {
+          id,
+          _id: id,
+          title: fields.title?.stringValue || "Untitled",
+          details: fields.details?.stringValue || "",
+          image_url: fields.image_url?.stringValue || "",
+          thumbnail_url: fields.thumbnail_url?.stringValue || "",
+          category: fields.category?.stringValue || "General",
+          status: fields.status?.stringValue || "approved", // Default existing news to approved
+          total_view: fields.total_view?.integerValue ? parseInt(fields.total_view.integerValue) : 0,
+          author: {
+            name: fields.author?.mapValue?.fields?.name?.stringValue || "The Brain Reporter",
+            published_date: fields.author?.mapValue?.fields?.published_date?.stringValue || new Date().toDateString(),
+            img: fields.author?.mapValue?.fields?.img?.stringValue || ""
+          }
+        };
+      })
+      .filter(item => item.status === "approved");
 
     return { status: true, message: "success", data: formattedData };
 

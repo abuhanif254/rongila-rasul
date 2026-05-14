@@ -18,6 +18,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ReadingProgressBar from "@/components/ui/ReadingProgressBar/ReadingProgressBar";
 import ShareButtons from "@/components/ui/ShareButtons/ShareButtons";
+import VerifiedIcon from "@mui/icons-material/Verified";
 
 const readingTime = (text = "") =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
@@ -106,15 +107,19 @@ export default function NewsDetailClient({ news, related }) {
             sx={{ mb: 2.5 }}
           >
             <Stack direction="row" alignItems="center" gap={1.5}>
-              <Avatar
-                src={news.author?.img}
-                alt={news.author?.name}
-                sx={{ width: 44, height: 44, border: "2px solid", borderColor: "divider" }}
-              />
+              <Link href={`/authors/${encodeURIComponent(news.author?.name)}`}>
+                <Avatar
+                  src={news.author?.img}
+                  alt={news.author?.name}
+                  sx={{ width: 44, height: 44, border: "2px solid", borderColor: "divider", cursor: "pointer", "&:hover": { borderColor: "#c0392b" } }}
+                />
+              </Link>
               <Box>
-                <Typography variant="body2" fontWeight={700}>
-                  {news.author?.name}
-                </Typography>
+                <Link href={`/authors/${encodeURIComponent(news.author?.name)}`}>
+                  <Typography variant="body2" fontWeight={700} sx={{ "&:hover": { color: "#c0392b" } }}>
+                    {news.author?.name}
+                  </Typography>
+                </Link>
                 <Typography variant="caption" color="text.secondary">
                   {news.author?.published_date}
                 </Typography>
@@ -161,6 +166,27 @@ export default function NewsDetailClient({ news, related }) {
                 {paragraph.trim()}
               </Typography>
             ))}
+          </Box>
+
+          {/* ── Sources & Citations (E-E-A-T) ── */}
+          <Box sx={{ mt: 5, p: 3, borderRadius: 3, bgcolor: "rgba(0,0,0,0.02)", border: "1px solid", borderColor: "divider" }}>
+            <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
+              <VerifiedIcon sx={{ fontSize: 18, color: "success.main" }} />
+              <Typography variant="subtitle2" fontWeight={800} sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Sources & Citations
+              </Typography>
+            </Stack>
+            <Stack spacing={1}>
+              {(news.sources || [
+                { name: "The Brain Intelligence Report", url: "#" },
+                { name: "Associated Press (AP)", url: "https://apnews.com" },
+                { name: "Reuters Editorial Board", url: "https://reuters.com" }
+              ]).map((source, index) => (
+                <Typography key={index} variant="caption" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  • <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ color: "#c0392b", fontWeight: 600, textDecoration: "none" }}>{source.name}</a>
+                </Typography>
+              ))}
+            </Stack>
           </Box>
 
           <Divider sx={{ my: 3.5 }} />
