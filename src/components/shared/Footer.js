@@ -294,8 +294,12 @@ const Footer = () => {
             © {year || "2026"} The Brain. All rights reserved.
           </Typography>
           <Stack direction="row" spacing={2.5}>
-            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (
-              <Link key={item} href="#">
+            {[
+              { name: "Privacy Policy", href: "/privacy-policy" },
+              { name: "Terms of Service", href: "/terms" },
+              { name: "Cookie Policy", href: "/cookies" }
+            ].map((item) => (
+              <Link key={item.name} href={item.href}>
                 <Typography
                   variant="caption"
                   sx={{
@@ -304,7 +308,7 @@ const Footer = () => {
                     "&:hover": { color: "rgba(255,255,255,0.7)" },
                   }}
                 >
-                  {item}
+                  {item.name}
                 </Typography>
               </Link>
             ))}
