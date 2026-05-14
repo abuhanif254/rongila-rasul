@@ -2,113 +2,99 @@ import { getSingleNews } from "@/utils/getSingleNews";
 import { getAllNews } from "@/utils/getAllNews";
 import { incrementViews } from "@/lib/firestore";
 import NewsDetailClient from "./NewsDetailClient";
-import Link from "next/link";
 import Script from "next/script";
+import { notFound } from "next/navigation";
+import { absoluteImage, articlePath, articleUrl, authorUrl, SITE_NAME } from "@/lib/site";
+import { createExcerpt, toIsoDate } from "@/lib/content-utils";
 
 export async function generateMetadata({ params }) {
-  const resolvedParams = await params;
-  const { newsId } = resolvedParams;
+  const { newsId } = await params;
   const newsResponse = await getSingleNews(newsId);
-  
+
   if (!newsResponse.status || !newsResponse.data) {
     return {
-      title: "Article Not Found | The Brain",
+      title: `Article Not Found | ${SITE_NAME}`,
+      robots: { index: false, follow: false },
     };
   }
 
   const news = newsResponse.data;
+  const description = createExcerpt(news.details, 160);
+  const image = absoluteImage(news.image_url || news.thumbnail_url);
+
   return {
-    title: `${news.title} | The Brain`,
-    description: news.details?.slice(0, 160),
+    title: news.title,
+    description,
+    alternates: {
+      canonical: articlePath(news),
+    },
     openGraph: {
       title: news.title,
-      description: news.details?.slice(0, 160),
-      images: [news.image_url || news.thumbnail_url],
+      description,
+      url: articleUrl(news),
+      siteName: SITE_NAME,
+      images: [{ url: image, alt: news.title }],
       type: "article",
-      publishedTime: news.author?.published_date,
-      authors: [news.author?.name],
+      publishedTime: toIsoDate(news.publishedAt || news.author?.published_date),
+      modifiedTime: toIsoDate(news.updatedAt || news.publishedAt || news.author?.published_date),
+      authors: [authorUrl(news.author?.name)],
+      tags: [news.category],
     },
     twitter: {
       card: "summary_large_image",
       title: news.title,
-      description: news.details?.slice(0, 160),
-      images: [news.image_url || news.thumbnail_url],
+      description,
+      images: [image],
     },
   };
 }
 
 export default async function NewsDetailPage({ params }) {
-  const resolvedParams = await params;
-  const { newsId } = resolvedParams;
-  
+  const { newsId } = await params;
   const newsResponse = await getSingleNews(newsId);
-  
-  // Increment views only for real articles (not fallbacks)
-  if (newsResponse.status && newsResponse.message !== "fallback") {
-    await incrementViews(newsId);
-  }
-  
-  if (!newsResponse.status) {
-    return (
-      <div style={{ padding: "80px 20px", textAlign: "center", maxWidth: '600px', margin: '0 auto' }}>
-        <h2 style={{ color: "#c0392b", fontWeight: 800 }}>Database Connection Error</h2>
-        <p style={{ color: '#666', lineHeight: 1.6, marginBottom: '24px' }}>
-          The Brain was unable to retrieve this article from the database. This is usually caused by a network block or firewall on your local machine.
-        </p>
-        <code style={{ display: 'block', padding: '12px', background: '#f5f5f5', borderRadius: '8px', fontSize: '0.8rem', marginBottom: '24px' }}>
-          Error: {newsResponse.message}
-        </code>
-        <Link href="/" style={{ textDecoration: "none", background: '#c0392b', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 700 }}>
-          ← Back to Home
-        </Link>
-      </div>
-    );
-  }
 
-  if (!newsResponse.data) {
-    return (
-      <div style={{ padding: "50px", textAlign: "center" }}>
-        <h2 style={{ color: "#c0392b" }}>News article not found.</h2>
-        <Link href="/" style={{ marginTop: "20px", display: "inline-block", textDecoration: "underline" }}>
-          ← Back to Home
-        </Link>
-      </div>
-    );
+  if (!newsResponse.status || !newsResponse.data) {
+    notFound();
   }
 
   const news = newsResponse.data;
+  await incrementViews(newsId);
 
-  // Fetch related news (same category)
-  const allResponse = await getAllNews();
-  let related = [];
-  if (allResponse.status) {
-    related = allResponse.data
-      .filter((n) => n.category === news.category && (n.id || n._id) !== newsId)
-      .slice(0, 3);
-  }
+  const allResponse = await getAllNews({ includeFallback: false });
+  const related = allResponse.status
+    ? allResponse.data
+        .filter((item) => item.category === news.category && (item.id || item._id) !== newsId)
+        .slice(0, 3)
+    : [];
 
-  // JSON-LD Structured Data for NewsArticle
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    "headline": news.title,
-    "image": [news.image_url || news.thumbnail_url],
-    "datePublished": news.author?.published_date,
-    "dateModified": news.author?.published_date,
-    "author": [{
-      "@type": "Person",
-      "name": news.author?.name,
-      "url": "https://the-brain-news.vercel.app" 
-    }],
-    "publisher": {
-      "@type": "Organization",
-      "name": "The Brain",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://the-brain-news.vercel.app/the-brain-logo.png"
-      }
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": articleUrl(news),
     },
-    "description": news.details?.slice(0, 160)
+    headline: news.title,
+    description: createExcerpt(news.details, 160),
+    image: [absoluteImage(news.image_url || news.thumbnail_url)],
+    datePublished: toIsoDate(news.publishedAt || news.author?.published_date),
+    dateModified: toIsoDate(news.updatedAt || news.publishedAt || news.author?.published_date),
+    articleSection: news.category,
+    author: [
+      {
+        "@type": "Person",
+        name: news.author?.name || "The Brain Editorial Team",
+        url: authorUrl(news.author?.name),
+      },
+    ],
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteImage("/the-brain-logo.png"),
+      },
+    },
   };
 
   return (

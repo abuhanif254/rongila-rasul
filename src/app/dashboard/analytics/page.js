@@ -26,19 +26,24 @@ import ArticleIcon from "@mui/icons-material/Article";
 import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
-import { getAllNews } from "@/lib/firestore";
+import { getNewsForUser } from "@/lib/firestore";
+import { subscribeToAuth } from "@/lib/auth-service";
 
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAnalytics();
+    const unsubscribe = subscribeToAuth((u) => {
+      if (u) fetchAnalytics(u);
+      if (!u) setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (activeUser) => {
     try {
-      const articles = await getAllNews();
+      const articles = await getNewsForUser(activeUser);
 
       if (!articles || articles.length === 0) {
         setAnalytics({

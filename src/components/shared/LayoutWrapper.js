@@ -6,7 +6,7 @@ import { Container } from "@mui/material";
 
 export const LayoutWrapper = ({ children }) => {
   const pathname = usePathname();
-  const isDashboard = pathname.startsWith("/dashboard") || pathname === "/login";
+  const isDashboard = pathname.startsWith("/dashboard") || pathname === "/login" || pathname === "/register";
 
   if (isDashboard) {
     return <>{children}</>;

@@ -33,7 +33,7 @@ export default async function AuthorProfilePage({ params }) {
   const dbProfile = await getAuthorProfile(name);
   
   // Fetch all news and filter by author
-  const newsResponse = await getAllNews();
+  const newsResponse = await getAllNews({ includeFallback: false });
   const allNews = newsResponse.data || [];
   const authorArticles = allNews.filter(n => n.author?.name === name);
 

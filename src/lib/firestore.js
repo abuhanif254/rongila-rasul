@@ -7,41 +7,56 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  increment,
   query,
   where,
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
+import { normalizeArticle } from "@/lib/content-utils";
 
 // Collection reference
 // Get all news
-export async function getAllNews() {
+export async function getAllNews({ includeUnpublished = true } = {}) {
   const newsCollection = collection(db, "news");
   try {
     const querySnapshot = await getDocs(newsCollection);
-    const news = [];
-    querySnapshot.forEach((doc) => {
-      news.push({ id: doc.id, ...doc.data() });
+    const news = querySnapshot.docs
+      .map((item) => normalizeArticle(item.id, item.data()))
+      .filter((item) => includeUnpublished || item.status === "approved");
+
+    return news.sort((a, b) => {
+      const dateA = new Date(a.publishedAt || a.createdAt || 0);
+      const dateB = new Date(b.publishedAt || b.createdAt || 0);
+      return dateB - dateA;
     });
-    return news;
   } catch (error) {
     throw error;
   }
 }
 
+export async function getNewsForUser(user) {
+  if (!user) return [];
+  if (user.role === "admin") return getAllNews({ includeUnpublished: true });
+  if (user.role !== "writer") return [];
+
+  const newsCollection = collection(db, "news");
+  const q = query(newsCollection, where("createdBy", "==", user.uid));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs
+    .map((item) => normalizeArticle(item.id, item.data()))
+    .sort((a, b) => new Date(b.publishedAt || b.createdAt || 0) - new Date(a.publishedAt || a.createdAt || 0));
+}
+
 // Get single news by ID
 export async function getNewsById(id) {
-  const newsCollection = collection(db, "news");
   try {
     const docRef = doc(db, "news", id);
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
-    } else {
-      return null;
+      return normalizeArticle(docSnap.id, docSnap.data());
     }
+    return null;
   } catch (error) {
     console.error("Error getting news by ID:", error);
     throw error;
@@ -54,10 +69,7 @@ export async function getNewsByCategory(category) {
   try {
     const q = query(newsCollection, where("category", "==", category));
     const querySnapshot = await getDocs(q);
-    const news = [];
-    querySnapshot.forEach((doc) => {
-      news.push({ id: doc.id, ...doc.data() });
-    });
+    const news = querySnapshot.docs.map((item) => normalizeArticle(item.id, item.data()));
     return news;
   } catch (error) {
     console.error("Error getting news by category:", error);
@@ -69,12 +81,26 @@ export async function getNewsByCategory(category) {
 export async function createNews(newsData) {
   const newsCollection = collection(db, "news");
   try {
+    const status = newsData.status || "pending";
+    const today = new Date().toISOString().slice(0, 10);
+    const author = {
+      uid: newsData.author?.uid || newsData.createdBy || "",
+      email: newsData.author?.email || "",
+      name: newsData.author?.name || "The Brain Editorial Team",
+      published_date: newsData.author?.published_date || today,
+      img: newsData.author?.img || "",
+    };
+
     const docRef = await addDoc(newsCollection, {
       ...newsData,
-      status: newsData.status || "pending",
+      status,
+      author,
+      createdBy: newsData.createdBy || author.uid || "",
       total_view: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+      publishedAt: status === "approved" ? serverTimestamp() : null,
+      approvedAt: status === "approved" ? serverTimestamp() : null,
     });
     
     return { id: docRef.id, ...newsData };
@@ -87,10 +113,22 @@ export async function createNews(newsData) {
 export const updateNewsStatus = async (id, status) => {
   try {
     const docRef = doc(db, "news", id);
-    await updateDoc(docRef, { 
+    const updates = {
       status,
-      updatedAt: serverTimestamp() 
-    });
+      updatedAt: serverTimestamp(),
+    };
+
+    if (status === "approved") {
+      updates.approvedAt = serverTimestamp();
+      updates.publishedAt = serverTimestamp();
+      updates["author.published_date"] = new Date().toISOString().slice(0, 10);
+    }
+
+    if (status === "rejected") {
+      updates.rejectedAt = serverTimestamp();
+    }
+
+    await updateDoc(docRef, updates);
     return { status: true };
   } catch (error) {
     console.error("Error updating news status:", error);
@@ -100,7 +138,6 @@ export const updateNewsStatus = async (id, status) => {
 
 // Update news
 export async function updateNews(id, newsData) {
-  const newsCollection = collection(db, "news");
   try {
     const docRef = doc(db, "news", id);
     await updateDoc(docRef, {
@@ -152,7 +189,7 @@ export async function incrementViews(id) {
     });
 
     if (res.ok) {
-      console.log(`✅ View incremented for article: ${id}`);
+      console.log(`View incremented for article: ${id}`);
     }
   } catch (error) {
     // Silent fail in production to avoid blocking the UI

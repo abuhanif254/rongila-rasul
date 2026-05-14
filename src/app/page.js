@@ -1,9 +1,13 @@
 import { getAllNews } from "@/utils/getAllNews";
 import HomeClient from "./HomeClient";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
 export const metadata = {
-  title: "The Brain | Intelligence Without Fear or Favour",
-  description: "The Brain is your trusted source for accurate, fast and unbiased journalism. Stay updated with the latest in Technology, Sports, Culture, and Entertainment.",
+  title: `${SITE_NAME} | ${SITE_TAGLINE}`,
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default async function HomePage() {

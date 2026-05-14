@@ -1,5 +1,6 @@
 import { getCategoryNews } from "@/utils/getCategoryNews";
 import CategoryNewsClient from "./CategoryNewsClient";
+import { SITE_NAME } from "@/lib/site";
 
 export async function generateMetadata({ params, searchParams }) {
   const resolvedParams = await params;
@@ -8,8 +9,11 @@ export async function generateMetadata({ params, searchParams }) {
   const formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
   
   return {
-    title: `${formattedCategory} News | The Brain`,
-    description: `Latest breaking stories and in-depth reporting on ${formattedCategory} from The Brain.`,
+    title: `${formattedCategory} News`,
+    description: `Latest news, analysis, and activism reporting on ${formattedCategory} from ${SITE_NAME}.`,
+    alternates: {
+      canonical: `/categories/news?category=${encodeURIComponent(category)}`,
+    },
   };
 }
 

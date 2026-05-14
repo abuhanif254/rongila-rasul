@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Box, Typography, Grid, Card, CardContent, Stack, Divider, Chip, Avatar, LinearProgress, CircularProgress } from "@mui/material";
+import { Box, Typography, Grid, Card, CardContent, Stack, Divider, Chip, Avatar, LinearProgress, CircularProgress, Button, Alert, TextField } from "@mui/material";
 import ArticleIcon from "@mui/icons-material/Article";
 import CategoryIcon from "@mui/icons-material/Category";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -9,14 +9,21 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 import { getAllNews } from "@/utils/getAllNews";
 import Link from "next/link";
+import { requestWriterAccess, subscribeToAuth } from "@/lib/auth-service";
 
 export default function DashboardOverview() {
   const [allNews, setAllNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [applicationMessage, setApplicationMessage] = useState("");
+  const [applyStatus, setApplyStatus] = useState({ type: "", message: "" });
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
+    const unsubscribe = subscribeToAuth((u) => setUser(u));
     const fetchNews = async () => {
       try {
         const response = await getAllNews();
@@ -30,7 +37,30 @@ export default function DashboardOverview() {
       }
     };
     fetchNews();
+    return () => unsubscribe();
   }, []);
+
+  const handleWriterApplication = async () => {
+    setApplying(true);
+    setApplyStatus({ type: "", message: "" });
+
+    try {
+      await requestWriterAccess(applicationMessage);
+      setUser((prev) => ({ ...prev, writerApplicationStatus: "pending" }));
+      setApplicationMessage("");
+      setApplyStatus({
+        type: "success",
+        message: "Your writer application was sent to the admin for review.",
+      });
+    } catch (error) {
+      setApplyStatus({
+        type: "error",
+        message: error.message || "Unable to send writer application.",
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -130,6 +160,58 @@ export default function DashboardOverview() {
           </Link>
         </Stack>
       </Stack>
+
+      {user?.role === "reader" && (
+        <Card sx={{ mb: 4, borderRadius: 3, border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <CardContent sx={{ p: 3 }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems={{ md: "center" }}>
+              <Box sx={{ flex: 1 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <HowToRegIcon sx={{ color: "#ef4444" }} />
+                  <Typography variant="h6" fontWeight={800} sx={{ color: "#0f172a" }}>
+                    Apply to Write
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" sx={{ color: "#64748b", lineHeight: 1.7 }}>
+                  Readers can request writer access. Once the admin approves your application, you can submit articles for editorial review.
+                </Typography>
+              </Box>
+
+              {user.writerApplicationStatus === "pending" ? (
+                <Alert severity="info" sx={{ minWidth: { md: 320 }, borderRadius: 2 }}>
+                  Your application is pending admin review.
+                </Alert>
+              ) : (
+                <Stack spacing={1.5} sx={{ width: { xs: "100%", md: 420 } }}>
+                  {applyStatus.message && (
+                    <Alert severity={applyStatus.type} sx={{ borderRadius: 2 }}>
+                      {applyStatus.message}
+                    </Alert>
+                  )}
+                  <TextField
+                    size="small"
+                    multiline
+                    minRows={2}
+                    value={applicationMessage}
+                    onChange={(event) => setApplicationMessage(event.target.value)}
+                    placeholder="Tell the admin what you want to write about"
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleWriterApplication}
+                    disabled={applying}
+                    startIcon={<HowToRegIcon />}
+                    sx={{ alignSelf: "flex-start", bgcolor: "#ef4444", fontWeight: 700, textTransform: "none", borderRadius: 2 }}
+                  >
+                    {applying ? "Sending..." : "Request Writer Access"}
+                  </Button>
+                </Stack>
+              )}
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {stats.map((stat, i) => (

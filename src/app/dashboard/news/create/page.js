@@ -13,10 +13,12 @@ import TextFieldsIcon from "@mui/icons-material/TextFields";
 import Image from "next/image";
 import { createNews, getAllSubscribers, getCategories } from "@/lib/firestore";
 import { useEffect } from "react";
+import { subscribeToAuth } from "@/lib/auth-service";
 
 export default function CreateNews() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -29,6 +31,7 @@ export default function CreateNews() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const unsubscribe = subscribeToAuth((u) => setUser(u));
     const fetchCats = async () => {
       try {
         const cats = await getCategories();
@@ -38,6 +41,7 @@ export default function CreateNews() {
       }
     };
     fetchCats();
+    return () => unsubscribe();
   }, []);
 
   const wordCount = formData.details.trim() ? formData.details.trim().split(/\s+/).length : 0;
@@ -57,8 +61,18 @@ export default function CreateNews() {
       return;
     }
     
+    if (!user || !["admin", "writer"].includes(user.role)) {
+      setStatus({ type: "error", message: "Only approved writers and admins can submit articles." });
+      return;
+    }
+
     setLoading(true);
     setStatus({ type: "", message: "" });
+
+    const isAdmin = user.role === "admin";
+    const authorName = isAdmin
+      ? formData.authorName || user.displayName || user.name || "The Brain Editorial Team"
+      : user.displayName || user.name || formData.authorName || "The Brain Writer";
 
     const newArticle = {
       title: formData.title,
@@ -66,10 +80,14 @@ export default function CreateNews() {
       details: formData.details,
       thumbnail_url: formData.thumbnail_url || `https://picsum.photos/seed/${Math.random()}/400/300`,
       image_url: formData.imageUrl || `https://picsum.photos/seed/${Math.random()}/800/400`,
+      status: isAdmin ? "approved" : "pending",
+      createdBy: user.uid,
       author: {
-        name: formData.authorName,
+        uid: user.uid,
+        email: user.email || "",
+        name: authorName,
         published_date: new Date().toISOString().split("T")[0],
-        img: "https://xsgames.co/randomusers/avatar.php?g=pixel",
+        img: user.photoURL || user.photo || "https://xsgames.co/randomusers/avatar.php?g=pixel",
       },
       total_view: 0,
       rating: { number: 4.5, badge: "Excellent" },
@@ -77,15 +95,20 @@ export default function CreateNews() {
 
     try {
       // 1. Publish Article
-      const result = await createNews(newArticle);
+      await createNews(newArticle);
       
       // 2. Fetch and Notify Subscribers (Simulation)
-      const subs = await getAllSubscribers();
-      const subCount = subs.length;
+      let subCount = 0;
+      if (isAdmin) {
+        const subs = await getAllSubscribers();
+        subCount = subs.length;
+      }
       
       setStatus({ 
         type: "success", 
-        message: `Article published! Sent notifications to ${subCount} subscribers. Redirecting...` 
+        message: isAdmin
+          ? `Article published! Sent notifications to ${subCount} subscribers. Redirecting...`
+          : "Article submitted for admin approval. Redirecting..."
       });
       
       // Clear form
@@ -149,7 +172,7 @@ export default function CreateNews() {
                     Publish New Article
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#94a3b8" }}>
-                    Fill in the details to publish a new article.
+                    {user?.role === "admin" ? "Publish approved content immediately." : "Submit an article for admin review."}
                   </Typography>
                 </Box>
               </Stack>
@@ -189,7 +212,10 @@ export default function CreateNews() {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth required label="Author Name"
-                        value={formData.authorName} onChange={handleChange("authorName")} sx={fieldSx}
+                        value={user?.role === "admin" ? formData.authorName : (user?.displayName || user?.name || formData.authorName)}
+                        onChange={handleChange("authorName")}
+                        disabled={user?.role !== "admin"}
+                        sx={fieldSx}
                       />
                     </Grid>
                   </Grid>
@@ -240,7 +266,7 @@ export default function CreateNews() {
                       "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)" },
                     }}
                   >
-                    {loading ? "Publishing..." : "Publish Article"}
+                    {loading ? "Saving..." : user?.role === "admin" ? "Publish Article" : "Submit for Review"}
                   </Button>
                 </Stack>
               </form>

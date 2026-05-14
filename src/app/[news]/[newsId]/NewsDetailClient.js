@@ -168,26 +168,24 @@ export default function NewsDetailClient({ news, related }) {
             ))}
           </Box>
 
-          {/* ── Sources & Citations (E-E-A-T) ── */}
-          <Box sx={{ mt: 5, p: 3, borderRadius: 3, bgcolor: "rgba(0,0,0,0.02)", border: "1px solid", borderColor: "divider" }}>
-            <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
-              <VerifiedIcon sx={{ fontSize: 18, color: "success.main" }} />
-              <Typography variant="subtitle2" fontWeight={800} sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Sources & Citations
-              </Typography>
-            </Stack>
-            <Stack spacing={1}>
-              {(news.sources || [
-                { name: "The Brain Intelligence Report", url: "#" },
-                { name: "Associated Press (AP)", url: "https://apnews.com" },
-                { name: "Reuters Editorial Board", url: "https://reuters.com" }
-              ]).map((source, index) => (
-                <Typography key={index} variant="caption" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  • <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ color: "#c0392b", fontWeight: 600, textDecoration: "none" }}>{source.name}</a>
+          {Array.isArray(news.sources) && news.sources.length > 0 && (
+            <Box sx={{ mt: 5, p: 3, borderRadius: 3, bgcolor: "rgba(0,0,0,0.02)", border: "1px solid", borderColor: "divider" }}>
+              <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                <VerifiedIcon sx={{ fontSize: 18, color: "success.main" }} />
+                <Typography variant="subtitle2" fontWeight={800} sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Sources & Citations
                 </Typography>
-              ))}
-            </Stack>
-          </Box>
+              </Stack>
+              <Stack spacing={1}>
+                {news.sources.map((source, index) => (
+                  <Typography key={index} variant="caption" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <span aria-hidden="true">-</span>
+                    <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ color: "#c0392b", fontWeight: 600, textDecoration: "none" }}>{source.name}</a>
+                  </Typography>
+                ))}
+              </Stack>
+            </Box>
+          )}
 
           <Divider sx={{ my: 3.5 }} />
 

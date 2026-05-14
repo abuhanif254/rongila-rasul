@@ -1,45 +1,41 @@
 import { getAllNews } from "@/utils/getAllNews";
+import { articleUrl, SITE_URL } from "@/lib/site";
+import { parseDate } from "@/lib/content-utils";
 
 export default async function sitemap() {
-  const baseUrl = "https://the-brain-news.vercel.app";
+  const newsResponse = await getAllNews({ includeFallback: false });
+  const newsData = newsResponse.status ? newsResponse.data : [];
 
-  // Fetch all news for dynamic pages
-  const newsResponse = await getAllNews();
-  const newsData = newsResponse.data || [];
-  
-  const newsEntries = newsData.map((news) => ({
-    url: `${baseUrl}/news/${news.id || news._id}`,
-    lastModified: new Date(news.author?.published_date || new Date()),
-    changeFrequency: "weekly",
+  const categories = [...new Set(newsData.map((news) => news.category).filter(Boolean))];
+
+  const staticEntries = [
+    ["", "daily", 1],
+    ["/news", "hourly", 0.9],
+    ["/categories/news?category=all-news", "daily", 0.8],
+    ["/about", "monthly", 0.5],
+    ["/contact", "monthly", 0.5],
+    ["/privacy-policy", "yearly", 0.3],
+    ["/terms", "yearly", 0.3],
+  ].map(([path, changeFrequency, priority]) => ({
+    url: `${SITE_URL}${path}`,
+    lastModified: new Date(),
+    changeFrequency,
+    priority,
+  }));
+
+  const categoryEntries = categories.map((category) => ({
+    url: `${SITE_URL}/categories/news?category=${encodeURIComponent(category.toLowerCase())}`,
+    lastModified: new Date(),
+    changeFrequency: "daily",
     priority: 0.7,
   }));
 
-  const staticEntries = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/categories/news?category=all-news`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-  ];
+  const newsEntries = newsData.map((news) => ({
+    url: articleUrl(news),
+    lastModified: parseDate(news.updatedAt || news.publishedAt || news.author?.published_date) || new Date(),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
 
-  return [...staticEntries, ...newsEntries];
+  return [...staticEntries, ...categoryEntries, ...newsEntries];
 }

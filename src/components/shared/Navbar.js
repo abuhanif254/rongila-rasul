@@ -7,7 +7,7 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import Image from "next/image";
 import logo from "@/assets/the-brain-landscape-logo.png";
-import { IconButton, Stack, Drawer, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
+import { IconButton, Stack, Drawer, List, ListItem, ListItemButton, ListItemText, Divider } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 
 // icons
@@ -19,9 +19,16 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import Link from "next/link";
 import { NAV_ITEMS } from "@/utils/navItems";
 import Header from "./Header";
+import { subscribeToAuth } from "@/lib/auth-service";
 
 function Navbar() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeToAuth((u) => setUser(u));
+    return () => unsubscribe();
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -103,6 +110,41 @@ function Navbar() {
                   <LinkedInIcon />
                 </IconButton>
               </Stack>
+
+              <Divider orientation="vertical" flexItem sx={{ mx: 2, borderColor: "rgba(255,255,255,0.1)", height: 24, alignSelf: "center" }} />
+
+              <Stack direction="row" spacing={1}>
+                {user ? (
+                  <Link href="/dashboard">
+                    <Button
+                      variant="contained"
+                      sx={{
+                        bgcolor: "#c0392b", fontWeight: 700, px: 2, borderRadius: 1.5, textTransform: "none",
+                        "&:hover": { bgcolor: "#a93226" }
+                      }}
+                    >
+                      Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login">
+                      <Button sx={{ color: "white", fontWeight: 600, textTransform: "none" }}>Sign In</Button>
+                    </Link>
+                    <Link href="/register">
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          color: "white", borderColor: "rgba(255,255,255,0.3)", fontWeight: 700, px: 2, borderRadius: 1.5, textTransform: "none",
+                          "&:hover": { borderColor: "#f39c12", color: "#f39c12" }
+                        }}
+                      >
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </Stack>
             </Box>
 
             {/* Mobile menu button */}
@@ -179,6 +221,27 @@ function Navbar() {
               <LinkedInIcon />
             </IconButton>
           </Stack>
+
+          <Box sx={{ px: 2, mt: 3 }}>
+            {user ? (
+              <Link href="/dashboard" style={{ textDecoration: "none" }} onClick={handleDrawerToggle}>
+                <Button fullWidth variant="contained" sx={{ bgcolor: "#c0392b", fontWeight: 700, borderRadius: 2 }}>
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Stack spacing={1.5}>
+                <Link href="/login" style={{ textDecoration: "none" }} onClick={handleDrawerToggle}>
+                  <Button fullWidth sx={{ color: "white", fontWeight: 600 }}>Sign In</Button>
+                </Link>
+                <Link href="/register" style={{ textDecoration: "none" }} onClick={handleDrawerToggle}>
+                  <Button fullWidth variant="outlined" sx={{ color: "white", borderColor: "rgba(255,255,255,0.3)", fontWeight: 700 }}>
+                    Create Account
+                  </Button>
+                </Link>
+              </Stack>
+            )}
+          </Box>
         </Box>
       </Drawer>
     </>

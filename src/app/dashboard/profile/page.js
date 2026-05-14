@@ -12,29 +12,39 @@ import PublicIcon from "@mui/icons-material/Public";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { getAuthorProfile, saveAuthorProfile } from "@/lib/firestore";
 
+import { subscribeToAuth } from "@/lib/auth-service";
+
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", content: "" });
+  const [user, setUser] = useState(null);
   
-  // For now, we use 'Admin User' as the default, matching the Dashboard Sidebar
   const [profile, setProfile] = useState({
-    name: "Admin User",
+    name: "",
     image: "",
-    role: "Senior Editorial Reporter",
+    role: "Editorial Contributor",
     bio: "",
-    expertise: "", // stored as comma separated string for easy editing
-    social: {
-      twitter: "",
-      linkedin: "",
-      website: ""
-    }
+    expertise: "",
+    social: { twitter: "", linkedin: "", website: "" }
   });
 
-  const fetchProfile = async () => {
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth((u) => {
+      if (u) {
+        setUser(u);
+        setProfile(prev => ({ ...prev, name: u.displayName || u.name || "" }));
+        fetchProfile(u.displayName || u.name);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const fetchProfile = async (name) => {
+    if (!name) return;
     try {
       setLoading(true);
-      const data = await getAuthorProfile(profile.name);
+      const data = await getAuthorProfile(name);
       if (data) {
         setProfile({
           ...data,
@@ -48,12 +58,9 @@ export default function EditProfilePage() {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!user) return;
     setSaving(true);
     setMsg({ type: "", content: "" });
 
@@ -64,12 +71,9 @@ export default function EditProfilePage() {
         updatedAt: new Date().toISOString()
       };
       
+      // Save using the specific doc ID (either existing or generated)
       await saveAuthorProfile(profile.id, dataToSave);
-      setMsg({ type: "success", content: "Expert profile updated successfully! Your E-E-A-T signals are now synced." });
-      
-      // Update local state with any new ID
-      if (!profile.id) fetchProfile();
-      
+      setMsg({ type: "success", content: "Professional profile updated successfully! Your E-E-A-T signals are now live." });
     } catch (err) {
       setMsg({ type: "error", content: "Failed to save profile. Please try again." });
     } finally {

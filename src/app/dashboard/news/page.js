@@ -14,8 +14,9 @@ import SortIcon from "@mui/icons-material/Sort";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import VerifiedIcon from "@mui/icons-material/Verified";
-import { getAllNews, deleteNews, updateNewsStatus } from "@/lib/firestore";
+import { getNewsForUser, deleteNews, updateNewsStatus } from "@/lib/firestore";
 import { useRouter } from "next/navigation";
+import { subscribeToAuth } from "@/lib/auth-service";
 
 const ITEMS_PER_PAGE = 10;
 const CAT_COLORS = {
@@ -36,13 +37,15 @@ export default function ManageNews() {
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(1);
   const [successMsg, setSuccessMsg] = useState("");
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
-  const fetchNews = async () => {
+  const fetchNews = async (activeUser) => {
+    if (!activeUser) return;
     try {
       setLoading(true);
       setError("");
-      const data = await getAllNews();
+      const data = await getNewsForUser(activeUser);
       setNews(data);
     } catch (err) {
       console.error("Error loading articles:", err);
@@ -53,6 +56,10 @@ export default function ManageNews() {
   };
 
   const handleApprove = async (id) => {
+    if (user?.role !== "admin") {
+      setError("Only admins can approve articles.");
+      return;
+    }
     try {
       await updateNewsStatus(id, "approved");
       setNews(prev => prev.map(n => (n.id || n._id) === id ? { ...n, status: "approved" } : n));
@@ -63,12 +70,32 @@ export default function ManageNews() {
     }
   };
 
-  useEffect(() => { fetchNews(); }, []);
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth((u) => {
+      setUser(u);
+      if (u) fetchNews(u);
+      if (!u) setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const categories = useMemo(() => [...new Set(news.map((n) => n.category))].filter(Boolean), [news]);
+  const visibleNews = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "admin") return news;
+    if (user.role === "writer") {
+      return news.filter((item) =>
+        item.createdBy === user.uid ||
+        item.author?.uid === user.uid ||
+        item.author?.email === user.email
+      );
+    }
+    return [];
+  }, [news, user]);
+
+  const categories = useMemo(() => [...new Set(visibleNews.map((n) => n.category))].filter(Boolean), [visibleNews]);
 
   const filteredNews = useMemo(() => {
-    let result = [...news];
+    let result = [...visibleNews];
 
     // Search
     if (search) {
@@ -103,12 +130,16 @@ export default function ManageNews() {
     }
 
     return result;
-  }, [news, search, categoryFilter, sortBy]);
+  }, [visibleNews, search, categoryFilter, sortBy]);
 
   const pageCount = Math.ceil(filteredNews.length / ITEMS_PER_PAGE);
   const paginatedNews = filteredNews.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const handleDelete = async (id) => {
+    if (user?.role !== "admin") {
+      setError("Only admins can delete articles.");
+      return;
+    }
     if (!confirm("Permanently delete this article? This cannot be undone.")) return;
     setDeletingId(id);
     try {
@@ -126,6 +157,10 @@ export default function ManageNews() {
   };
 
   const handleBulkDelete = async () => {
+    if (user?.role !== "admin") {
+      setError("Only admins can delete articles.");
+      return;
+    }
     if (!confirm(`Delete ${selected.length} selected articles? This cannot be undone.`)) return;
     for (const id of selected) {
       try {
@@ -148,6 +183,12 @@ export default function ManageNews() {
     setSelected(allSelected ? selected.filter((s) => !allIds.includes(s)) : [...new Set([...selected, ...allIds])]);
   };
 
+  const canEdit = (item) =>
+    user?.role === "admin" ||
+    (user?.role === "writer" &&
+      (item.createdBy === user.uid || item.author?.uid === user.uid || item.author?.email === user.email) &&
+      item.status !== "approved");
+
   return (
     <Box>
       {/* Header */}
@@ -160,21 +201,28 @@ export default function ManageNews() {
             {filteredNews.length} articles found
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => router.push("/dashboard/news/create")}
-          sx={{
-            fontWeight: 700, px: 3, borderRadius: 2, textTransform: "none",
-            background: "linear-gradient(135deg, #ef4444, #f97316)",
-            boxShadow: "0 4px 12px rgba(239,68,68,0.3)",
-            "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)", boxShadow: "0 6px 16px rgba(239,68,68,0.4)" },
-          }}
-        >
-          Publish Article
-        </Button>
+        {["admin", "writer"].includes(user?.role) && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => router.push("/dashboard/news/create")}
+            sx={{
+              fontWeight: 700, px: 3, borderRadius: 2, textTransform: "none",
+              background: "linear-gradient(135deg, #ef4444, #f97316)",
+              boxShadow: "0 4px 12px rgba(239,68,68,0.3)",
+              "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)", boxShadow: "0 6px 16px rgba(239,68,68,0.4)" },
+            }}
+          >
+            {user?.role === "admin" ? "Publish Article" : "Submit Article"}
+          </Button>
+        )}
       </Stack>
 
+      {user?.role === "reader" && (
+        <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+          Your account is currently a reader account. Apply for writer access from the dashboard overview.
+        </Alert>
+      )}
       {successMsg && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{successMsg}</Alert>}
       {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
 
@@ -221,7 +269,7 @@ export default function ManageNews() {
             <MenuItem value="views">Most Views</MenuItem>
             <MenuItem value="title">Alphabetical</MenuItem>
           </TextField>
-          {selected.length > 0 && (
+          {user?.role === "admin" && selected.length > 0 && (
             <Button
               variant="outlined" color="error" size="small"
               startIcon={<DeleteSweepIcon />}
@@ -243,6 +291,7 @@ export default function ManageNews() {
                 <TableCell padding="checkbox">
                   <Checkbox
                     size="small"
+                    disabled={user?.role !== "admin"}
                     checked={paginatedNews.length > 0 && paginatedNews.every((n) => selected.includes(n._id || n.id))}
                     indeterminate={paginatedNews.some((n) => selected.includes(n._id || n.id)) && !paginatedNews.every((n) => selected.includes(n._id || n.id))}
                     onChange={toggleSelectAll}
@@ -259,11 +308,11 @@ export default function ManageNews() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">Loading articles...</Typography>
                 </TableCell></TableRow>
               ) : paginatedNews.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                   <ArticleIcon sx={{ fontSize: 48, color: "#e2e8f0", mb: 1 }} />
                   <Typography variant="body2" color="text.secondary">No articles found</Typography>
                 </TableCell></TableRow>
@@ -284,6 +333,7 @@ export default function ManageNews() {
                       <TableCell padding="checkbox">
                         <Checkbox
                           size="small" checked={isSelected} onChange={() => toggleSelect(id)}
+                          disabled={user?.role !== "admin"}
                           sx={{ color: "#cbd5e1", "&.Mui-checked": { color: "#ef4444" } }}
                         />
                       </TableCell>
@@ -334,7 +384,7 @@ export default function ManageNews() {
                       </TableCell>
                       <TableCell align="center">
                         <Stack direction="row" justifyContent="center" gap={0.5}>
-                          {item.status === "pending" && (
+                          {user?.role === "admin" && item.status === "pending" && (
                             <Tooltip title="Approve">
                               <IconButton size="small" onClick={() => handleApprove(id)}
                                 sx={{ color: "#16a34a", "&:hover": { bgcolor: "rgba(22,163,74,0.08)" } }}
@@ -343,20 +393,24 @@ export default function ManageNews() {
                               </IconButton>
                             </Tooltip>
                           )}
-                          <Tooltip title="Edit">
-                            <IconButton size="small" onClick={() => router.push(`/dashboard/news/edit/${id}`)}
-                              sx={{ color: "#3b82f6", "&:hover": { bgcolor: "rgba(59,130,246,0.08)" } }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton size="small" disabled={deletingId === id} onClick={() => handleDelete(id)}
-                              sx={{ color: "#ef4444", "&:hover": { bgcolor: "rgba(239,68,68,0.08)" } }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          {canEdit(item) && (
+                            <Tooltip title="Edit">
+                              <IconButton size="small" onClick={() => router.push(`/dashboard/news/edit/${id}`)}
+                                sx={{ color: "#3b82f6", "&:hover": { bgcolor: "rgba(59,130,246,0.08)" } }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {user?.role === "admin" && (
+                            <Tooltip title="Delete">
+                              <IconButton size="small" disabled={deletingId === id} onClick={() => handleDelete(id)}
+                                sx={{ color: "#ef4444", "&:hover": { bgcolor: "rgba(239,68,68,0.08)" } }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </Stack>
                       </TableCell>
                     </TableRow>

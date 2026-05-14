@@ -4,6 +4,7 @@ import { Box, Typography, TextField, Button, Paper, Grid, MenuItem, Alert, Circu
 import { useRouter, useParams } from "next/navigation";
 import { getNewsById, updateNews, getCategories } from "@/lib/firestore";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { subscribeToAuth } from "@/lib/auth-service";
 
 export default function EditNews() {
   const router = useRouter();
@@ -22,9 +23,17 @@ export default function EditNews() {
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [user, setUser] = useState(null);
+  const [article, setArticle] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth((u) => setUser(u));
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchArticleAndCats = async () => {
+      if (!user) return;
       try {
         setFetching(true);
         // Fetch categories
@@ -35,6 +44,17 @@ export default function EditNews() {
         const article = await getNewsById(id);
         
         if (article) {
+          const ownsArticle =
+            article.createdBy === user.uid ||
+            article.author?.uid === user.uid ||
+            article.author?.email === user.email;
+
+          if (user.role !== "admin" && (!ownsArticle || article.status === "approved")) {
+            setStatus({ type: "error", message: "You can only edit your own unpublished submissions." });
+            return;
+          }
+
+          setArticle(article);
           setFormData({
             title: article.title || "",
             category: article.category || "",
@@ -54,15 +74,22 @@ export default function EditNews() {
       }
     };
 
-    if (id) {
+    if (id && user) {
       fetchArticleAndCats();
     }
-  }, [id]);
+  }, [id, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user || !article) return;
     setLoading(true);
     setStatus({ type: "", message: "" });
+
+    if (user.role !== "admin" && article.status === "approved") {
+      setStatus({ type: "error", message: "Published articles can only be edited by an admin." });
+      setLoading(false);
+      return;
+    }
 
     const updatedArticle = {
       title: formData.title,
@@ -70,8 +97,13 @@ export default function EditNews() {
       details: formData.details,
       thumbnail_url: formData.thumbnail_url,
       image_url: formData.imageUrl || formData.thumbnail_url,
+      status: user.role === "admin" ? article.status : "pending",
       author: {
+        uid: article.author?.uid || user.uid,
+        email: article.author?.email || user.email || "",
         name: formData.authorName,
+        published_date: article.author?.published_date || new Date().toISOString().split("T")[0],
+        img: article.author?.img || user.photoURL || user.photo || "",
       },
     };
 
