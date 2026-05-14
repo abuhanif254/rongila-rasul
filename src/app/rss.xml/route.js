@@ -3,10 +3,11 @@ import { getAllNews } from "@/utils/getAllNews";
 
 export async function GET() {
   try {
-    const newsData = await getAllNews();
+    const newsResponse = await getAllNews();
+    const newsData = newsResponse.data || [];
     
     // Sort news by date (newest first)
-    const sortedNews = newsData.sort((a, b) => {
+    const sortedNews = [...newsData].sort((a, b) => {
       const dateA = new Date(a.author?.published_date || 0);
       const dateB = new Date(b.author?.published_date || 0);
       return dateB - dateA;

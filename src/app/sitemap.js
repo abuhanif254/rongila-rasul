@@ -4,7 +4,9 @@ export default async function sitemap() {
   const baseUrl = "https://the-brain-news.vercel.app";
 
   // Fetch all news for dynamic pages
-  const newsData = await getAllNews();
+  const newsResponse = await getAllNews();
+  const newsData = newsResponse.data || [];
+  
   const newsEntries = newsData.map((news) => ({
     url: `${baseUrl}/news/${news.id || news._id}`,
     lastModified: new Date(news.author?.published_date || new Date()),
