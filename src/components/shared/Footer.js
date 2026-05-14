@@ -100,14 +100,18 @@ const Footer = () => {
             </Typography>
             <Stack direction="row" spacing={1}>
               {[
-                { Icon: FacebookIcon, color: "#1877F2", label: "Facebook" },
-                { Icon: TwitterIcon, color: "#1DA1F2", label: "Twitter" },
-                { Icon: YouTubeIcon, color: "#FF0000", label: "YouTube" },
-                { Icon: InstagramIcon, color: "#E4405F", label: "Instagram" },
-                { Icon: LinkedInIcon, color: "#0A66C2", label: "LinkedIn" },
-              ].map(({ Icon, color, label }) => (
+                { Icon: FacebookIcon, color: "#1877F2", label: "Facebook", url: "https://www.facebook.com/bitulla" },
+                { Icon: TwitterIcon, color: "#1DA1F2", label: "Twitter", url: "https://x.com/MohammadBitull1" },
+                { Icon: YouTubeIcon, color: "#FF0000", label: "YouTube", url: "https://www.youtube.com/@MohammadBitullah" },
+                { Icon: InstagramIcon, color: "#E4405F", label: "Instagram", url: "https://www.instagram.com/bitullah_aj" },
+                { Icon: LinkedInIcon, color: "#0A66C2", label: "LinkedIn", url: "https://www.linkedin.com/in/md-abu-hanif-mia" },
+              ].map(({ Icon, color, label, url }) => (
                 <Tooltip key={label} title={label} arrow>
                   <IconButton
+                    component="a"
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     size="small"
                     sx={{
                       color: "rgba(255,255,255,0.6)",
@@ -287,7 +291,7 @@ const Footer = () => {
           gap={2}
         >
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)" }}>
-            © {year || "2024"} The Brain. All rights reserved.
+            © {year || "2026"} The Brain. All rights reserved.
           </Typography>
           <Stack direction="row" spacing={2.5}>
             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (

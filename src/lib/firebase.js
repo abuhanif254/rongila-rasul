@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,8 +14,16 @@ const firebaseConfig = {
 // Initialize Firebase only if it hasn't been initialized
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-});
+const db = getFirestore(app);
+
+// Suppress internal Firebase GRPC warnings from crashing the Next.js dev overlay
+if (typeof window === "undefined") {
+  const originalError = console.error;
+  console.error = (...args) => {
+    const errorString = args.join(" ");
+    if (errorString.includes("GRPC error has no .code") || errorString.includes("GrpcConnection RPC 'Listen'")) return;
+    originalError.apply(console, args);
+  };
+}
 
 export { app, auth, db };

@@ -1,8 +1,9 @@
-import { getNewsByCategory as fetchCategoryNews, getAllNews } from "@/lib/firestore";
+import { getAllNews } from "./getAllNews";
 
 export const getCategoryNews = async (category) => {
   try {
-    let newsData = await getAllNews();
+    const response = await getAllNews();
+    let newsData = response.data || [];
     
     if (category && category !== "all-news") {
       const targetCategory = category.toLowerCase();
@@ -13,7 +14,7 @@ export const getCategoryNews = async (category) => {
 
     return {
       status: true,
-      message: "success",
+      message: response.message || "success",
       data: newsData,
     };
   } catch (error) {

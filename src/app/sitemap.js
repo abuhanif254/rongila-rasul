@@ -1,7 +1,18 @@
-export default function sitemap() {
-  const baseUrl = "https://dragon-news.vercel.app";
+import { getAllNews } from "@/utils/getAllNews";
 
-  return [
+export default async function sitemap() {
+  const baseUrl = "https://the-brain-news.vercel.app";
+
+  // Fetch all news for dynamic pages
+  const newsData = await getAllNews();
+  const newsEntries = newsData.map((news) => ({
+    url: `${baseUrl}/news/${news.id || news._id}`,
+    lastModified: new Date(news.author?.published_date || new Date()),
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
+  const staticEntries = [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -17,14 +28,16 @@ export default function sitemap() {
     {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
-      changeFrequency: "yearly",
+      changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${baseUrl}/contact`,
       lastModified: new Date(),
-      changeFrequency: "yearly",
+      changeFrequency: "monthly",
       priority: 0.5,
     },
   ];
+
+  return [...staticEntries, ...newsEntries];
 }

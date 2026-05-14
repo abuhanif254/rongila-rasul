@@ -15,6 +15,7 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import InstagramIcon from "@mui/icons-material/Instagram";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import Link from "next/link";
 import { NAV_ITEMS } from "@/utils/navItems";
 import Header from "./Header";
@@ -86,17 +87,20 @@ function Navbar() {
             {/* Social icons - desktop */}
             <Box sx={{ display: { xs: "none", md: "flex" } }}>
               <Stack direction="row">
-                <IconButton sx={{ color: "white", "&:hover": { color: "#4267B2" } }}>
+                <IconButton component="a" href="https://www.facebook.com/bitulla" target="_blank" sx={{ color: "white", "&:hover": { color: "#4267B2" } }}>
                   <FacebookIcon />
                 </IconButton>
-                <IconButton sx={{ color: "white", "&:hover": { color: "#1DA1F2" } }}>
+                <IconButton component="a" href="https://x.com/MohammadBitull1" target="_blank" sx={{ color: "white", "&:hover": { color: "#1DA1F2" } }}>
                   <TwitterIcon />
                 </IconButton>
-                <IconButton sx={{ color: "white", "&:hover": { color: "#FF0000" } }}>
+                <IconButton component="a" href="https://www.youtube.com/@MohammadBitullah" target="_blank" sx={{ color: "white", "&:hover": { color: "#FF0000" } }}>
                   <YouTubeIcon />
                 </IconButton>
-                <IconButton sx={{ color: "white", "&:hover": { color: "#E1306C" } }}>
+                <IconButton component="a" href="https://www.instagram.com/bitullah_aj" target="_blank" sx={{ color: "white", "&:hover": { color: "#E1306C" } }}>
                   <InstagramIcon />
+                </IconButton>
+                <IconButton component="a" href="https://www.linkedin.com/in/md-abu-hanif-mia" target="_blank" sx={{ color: "white", "&:hover": { color: "#0A66C2" } }}>
+                  <LinkedInIcon />
                 </IconButton>
               </Stack>
             </Box>
@@ -159,17 +163,20 @@ function Navbar() {
 
           {/* Social icons in mobile */}
           <Stack direction="row" justifyContent="center" sx={{ mt: 2, gap: 1 }}>
-            <IconButton sx={{ color: "white" }}>
+            <IconButton component="a" href="https://www.facebook.com/bitulla" target="_blank" sx={{ color: "white" }}>
               <FacebookIcon />
             </IconButton>
-            <IconButton sx={{ color: "white" }}>
+            <IconButton component="a" href="https://x.com/MohammadBitull1" target="_blank" sx={{ color: "white" }}>
               <TwitterIcon />
             </IconButton>
-            <IconButton sx={{ color: "white" }}>
+            <IconButton component="a" href="https://www.youtube.com/@MohammadBitullah" target="_blank" sx={{ color: "white" }}>
               <YouTubeIcon />
             </IconButton>
-            <IconButton sx={{ color: "white" }}>
+            <IconButton component="a" href="https://www.instagram.com/bitullah_aj" target="_blank" sx={{ color: "white" }}>
               <InstagramIcon />
+            </IconButton>
+            <IconButton component="a" href="https://www.linkedin.com/in/md-abu-hanif-mia" target="_blank" sx={{ color: "white" }}>
+              <LinkedInIcon />
             </IconButton>
           </Stack>
         </Box>

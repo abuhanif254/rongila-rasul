@@ -20,6 +20,8 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import SendIcon from "@mui/icons-material/Send";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LanguageIcon from "@mui/icons-material/Language";
 import { saveContactMessage } from "@/lib/firestore";
 
 const OFFICE_SCHEDULE = [
@@ -84,9 +86,11 @@ const ContactPage = () => {
   };
 
   const INFO = [
-    { Icon: EmailIcon, label: "Email", value: "contact@dragonnews.com", href: "mailto:contact@dragonnews.com" },
-    { Icon: PhoneIcon, label: "Phone", value: "+1 (800) 123-4567", href: "tel:+18001234567" },
-    { Icon: LocationOnIcon, label: "Address", value: "123 News Street, Media City, NY 10001", href: "#" },
+    { Icon: EmailIcon, label: "Email", value: "mohammadbitullah@gmail.com", href: "mailto:mohammadbitullah@gmail.com" },
+    { Icon: PhoneIcon, label: "Phone", value: "+8801724010261", href: "tel:+8801724010261" },
+    { Icon: LocationOnIcon, label: "Address", value: "2300 Kishoreganj Sadar, Dhaka", href: "https://www.google.com/maps?q=Kishoreganj+Sadar,+Dhaka" },
+    { Icon: LanguageIcon, label: "Portfolio", value: "abu-hanif-mia.vercel.app", href: "https://abu-hanif-mia.vercel.app" },
+    { Icon: GitHubIcon, label: "GitHub", value: "github.com/abuhanif254", href: "https://github.com/abuhanif254" },
   ];
 
   return (

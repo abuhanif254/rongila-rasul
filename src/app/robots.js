@@ -5,6 +5,6 @@ export default function robots() {
       allow: "/",
       disallow: ["/api/", "/dashboard/"],
     },
-    sitemap: "https://dragon-news.vercel.app/sitemap.xml",
+    sitemap: "https://the-brain-news.vercel.app/sitemap.xml",
   };
 }

@@ -14,10 +14,9 @@ import {
 } from "firebase/firestore";
 
 // Collection reference
-const newsCollection = collection(db, "news");
-
 // Get all news
 export async function getAllNews() {
+  const newsCollection = collection(db, "news");
   try {
     const querySnapshot = await getDocs(newsCollection);
     const news = [];
@@ -26,13 +25,13 @@ export async function getAllNews() {
     });
     return news;
   } catch (error) {
-    console.error("Error getting news:", error);
     throw error;
   }
 }
 
 // Get single news by ID
 export async function getNewsById(id) {
+  const newsCollection = collection(db, "news");
   try {
     const docRef = doc(db, "news", id);
     const docSnap = await getDoc(docRef);
@@ -50,6 +49,7 @@ export async function getNewsById(id) {
 
 // Get news by category
 export async function getNewsByCategory(category) {
+  const newsCollection = collection(db, "news");
   try {
     const q = query(newsCollection, where("category", "==", category));
     const querySnapshot = await getDocs(q);
@@ -66,28 +66,23 @@ export async function getNewsByCategory(category) {
 
 // Create new news
 export async function createNews(newsData) {
+  const newsCollection = collection(db, "news");
   try {
-    console.log("🔥 Firestore: Starting createNews...");
-    console.log("📦 Data to save:", newsData);
-    
     const docRef = await addDoc(newsCollection, {
       ...newsData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     
-    console.log("✅ Firestore: Document created with ID:", docRef.id);
     return { id: docRef.id, ...newsData };
   } catch (error) {
-    console.error("❌ Firestore createNews error:", error);
-    console.error("Error code:", error.code);
-    console.error("Error message:", error.message);
     throw error;
   }
 }
 
 // Update news
 export async function updateNews(id, newsData) {
+  const newsCollection = collection(db, "news");
   try {
     const docRef = doc(db, "news", id);
     await updateDoc(docRef, {
@@ -202,6 +197,17 @@ export const getAllSubscribers = async () => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error("Error getting subscribers:", error);
+    throw error;
+  }
+};
+
+// Delete subscriber
+export const deleteSubscriber = async (id) => {
+  try {
+    await deleteDoc(doc(db, "subscribers", id));
+    return { status: true };
+  } catch (error) {
+    console.error("Error deleting subscriber:", error);
     throw error;
   }
 };

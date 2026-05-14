@@ -5,7 +5,7 @@ import {
   TableHead, TableRow, IconButton, Chip, Stack,
   CircularProgress, Alert, Avatar, Tooltip
 } from "@mui/material";
-import { getAllSubscribers } from "@/lib/firestore";
+import { getAllSubscribers, deleteSubscriber } from "@/lib/firestore";
 import PeopleIcon from "@mui/icons-material/People";
 import EmailIcon from "@mui/icons-material/Email";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -32,6 +32,18 @@ export default function SubscribersPage() {
   useEffect(() => {
     fetchSubscribers();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to remove this subscriber?")) {
+      try {
+        await deleteSubscriber(id);
+        setSubscribers(prev => prev.filter(s => s.id !== id));
+      } catch (err) {
+        console.error("Delete error:", err);
+        alert("Failed to delete subscriber.");
+      }
+    }
+  };
 
   const handleExport = () => {
     const csv = subscribers.map(s => `${s.email},${s.subscribedAt}`).join("\n");
@@ -127,7 +139,11 @@ export default function SubscribersPage() {
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Delete">
-                      <IconButton size="small" color="error">
+                      <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={() => handleDelete(sub.id)}
+                      >
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
