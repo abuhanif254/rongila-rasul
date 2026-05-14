@@ -290,7 +290,7 @@ export default function DashboardLayout({ children }) {
             {/* Breadcrumb */}
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="body2" sx={{ color: "#94a3b8", fontSize: "0.75rem" }}>
-                Dragon News Admin
+                The Brain Admin
               </Typography>
               <Typography variant="subtitle2" fontWeight={700} sx={{ textTransform: "capitalize" }}>
                 {pathname === "/dashboard" ? "Overview" : pathname.split("/").pop()?.replace(/-/g, " ") || "Dashboard"}

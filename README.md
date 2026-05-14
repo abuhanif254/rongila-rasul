@@ -1,6 +1,6 @@
-# 🐉 Dragon News
+# 🧠 The Brain - Next-Gen News Portal
 
-A modern news platform built with Next.js 16, featuring a powerful admin dashboard with Firebase Authentication and Cloud Firestore.
+The Brain is a professional, feature-rich news portal built with Next.js 16, featuring a powerful admin dashboard with Firebase Authentication and Cloud Firestore.
 
 ## ✨ Features
 

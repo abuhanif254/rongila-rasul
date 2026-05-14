@@ -13,7 +13,7 @@ const ShareButtons = ({ title, url }) => {
 
   const pageUrl = url || (typeof window !== "undefined" ? window.location.href : "");
   const encoded = encodeURIComponent(pageUrl);
-  const encodedTitle = encodeURIComponent(title || "Check this out on Dragon News");
+  const encodedTitle = encodeURIComponent(title || "Check this out on The Brain");
 
   const handleCopy = async () => {
     try {

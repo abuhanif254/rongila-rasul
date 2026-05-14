@@ -6,7 +6,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import Image from "next/image";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/the-brain-landscape-logo.png";
 import { IconButton, Stack, Drawer, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 
@@ -42,9 +42,9 @@ function Navbar() {
             <Link href="/">
               <Image 
                 src={logo} 
-                alt="Dragon News logo" 
+                alt="The Brain logo" 
                 priority
-                style={{ width: "80px", height: "auto", display: "block" }}
+                style={{ width: "120px", height: "auto", display: "block" }}
               />
             </Link>
 

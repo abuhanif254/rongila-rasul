@@ -28,7 +28,7 @@ export default function SettingsPage() {
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const [settings, setSettings] = useState({
     // Site Settings
-    siteName: "Dragon News",
+    siteName: "The Brain",
     siteDescription: "Your trusted source for breaking news",
     siteUrl: "https://dragonnews.com",
     contactEmail: "contact@dragonnews.com",

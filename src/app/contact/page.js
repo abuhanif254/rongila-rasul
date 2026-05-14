@@ -119,7 +119,7 @@ const ContactPage = () => {
             mb: 2,
           }}
         >
-          Contact Dragon News
+          Contact The Brain
         </Typography>
         <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", maxWidth: 500, mx: "auto", lineHeight: 1.8 }}>
           Have a tip, feedback, or partnership inquiry? Our editorial team would love to hear from you.

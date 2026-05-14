@@ -12,9 +12,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata = {
-  title: "Dragon News — Journalism Without Fear or Favour",
-  description:
-    "Your trusted source for the latest news in Technology, Sports, Culture, and Entertainment.",
+  title: "The Brain — Intelligence Without Fear or Favour",
+  description: "The Brain is your trusted source for accurate, fast and unbiased journalism.",
 };
 
 export default function RootLayout({ children }) {

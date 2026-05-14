@@ -89,7 +89,7 @@ const AboutPage = () => {
             mb: 2.5,
           }}
         >
-          Dragon News
+          The Brain
         </Typography>
         <Typography
           variant="body1"

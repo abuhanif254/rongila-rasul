@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/the-brain-logo.png";
 import Link from "next/link";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -149,7 +149,7 @@ const LoginPage = () => {
                 src={logo}
                 width={80}
                 height={80}
-                alt="Dragon News"
+                alt="The Brain"
                 style={{ filter: "brightness(0) invert(1)", opacity: 0.9, marginBottom: 32, width: 'auto', height: 'auto' }}
               />
             </Link>
@@ -163,12 +163,12 @@ const LoginPage = () => {
                 mb: 2,
               }}
             >
-              Dragon News
+              The Brain
               <br />
               <span style={{ color: "#f39c12" }}>Admin Portal</span>
             </Typography>
             <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.65)", mb: 4, lineHeight: 1.8 }}>
-              Central command for the Dragon News editorial team.
+              Central command for The Brain editorial team.
               Secure, fast, and powerful.
             </Typography>
 
@@ -227,7 +227,7 @@ const LoginPage = () => {
             {/* Mobile logo */}
             <Box sx={{ display: { md: "none" }, textAlign: "center", mb: 3 }}>
               <Link href="/">
-                <Image src={logo} width={70} height={70} alt="Dragon News" style={{ width: 'auto', height: 'auto' }} />
+                <Image src={logo} width={70} height={70} alt="The Brain" style={{ width: 'auto', height: 'auto' }} />
               </Link>
             </Box>
 

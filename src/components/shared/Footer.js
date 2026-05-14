@@ -89,7 +89,7 @@ const Footer = () => {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              Dragon News
+              The Brain
             </Typography>
             <Typography
               variant="body2"
@@ -287,7 +287,7 @@ const Footer = () => {
           gap={2}
         >
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)" }}>
-            © {year || "2024"} The Dragon News. All rights reserved.
+            © {year || "2024"} The Brain. All rights reserved.
           </Typography>
           <Stack direction="row" spacing={2.5}>
             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (

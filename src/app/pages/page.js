@@ -12,8 +12,8 @@ import { NAV_ITEMS } from "@/utils/navItems";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 export const metadata = {
-  title: "Site Directory | Dragon News",
-  description: "Directory of all active pages on the Dragon News portal.",
+  title: "Site Directory | The Brain",
+  description: "Directory of all active pages on The Brain portal.",
 };
 
 const PagesDirectory = () => {
@@ -29,7 +29,7 @@ const PagesDirectory = () => {
         Site Directory
       </Typography>
       <Typography variant="body1" align="center" color="text.secondary" className="mb-10 max-w-2xl mx-auto">
-        Explore all sections of the Dragon News portal. From our latest breaking stories to our contact and about pages, find exactly what you're looking for below.
+        Explore all sections of The Brain portal. From our latest breaking stories to our contact and about pages, find exactly what you're looking for below.
       </Typography>
 
       <Grid container spacing={4} className="mt-4">
